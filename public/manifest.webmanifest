@@ -1,0 +1,20 @@
+{
+  "name": "Puzzleando",
+  "short_name": "Puzzleando",
+  "description": "Create printable and interactive classroom puzzles from any image.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f3ff",
+  "theme_color": "#7c3aed",
+  "categories": ["education", "games", "productivity"],
+  "icons": [
+    {
+      "src": "./puzzle-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

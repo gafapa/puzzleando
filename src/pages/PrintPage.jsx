@@ -35,7 +35,7 @@ function usePrintData(imageEl, rows, cols) {
   return { pieceUrls, positionGrid }
 }
 
-export default function PrintPage({ config, onBack }) {
+export default function PrintPage({ config, onBack, t }) {
   const { imageDataUrl, imageEl, title, rows, cols } = config
   const { pieceUrls, positionGrid } = usePrintData(imageEl, rows, cols)
 
@@ -46,12 +46,12 @@ export default function PrintPage({ config, onBack }) {
 
       {/* ── Controls (hidden on print) ─────────────────────────────────── */}
       <div className="print-controls no-print">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>← Volver</button>
+        <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t('back')}</button>
         <span className="title">🖨️ {title}</span>
         <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>← Volver a editar</button>
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t('backToEdit')}</button>
           <button className="btn btn-primary" onClick={() => window.print()}>
-            🖨️ Imprimir
+            🖨️ {t('print')}
           </button>
         </div>
       </div>
@@ -68,8 +68,7 @@ export default function PrintPage({ config, onBack }) {
           <div style={{ marginBottom: 18 }}>
             <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>{title}</h1>
             <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-              ✂ Recorta cada pieza por las líneas de puntos y arma el puzzle.
-              El número en cada pieza te ayuda a referenciarte con la clave.
+              ✂ {t('cutInstructions')}
             </p>
           </div>
 
@@ -96,7 +95,7 @@ export default function PrintPage({ config, onBack }) {
               >
                 <img
                   src={url}
-                  alt={`Pieza ${num}`}
+                  alt={`${t('pieces')} ${num}`}
                   style={{ width: '100%', display: 'block' }}
                 />
                 {/* Piece number badge */}
@@ -120,7 +119,7 @@ export default function PrintPage({ config, onBack }) {
           </div>
 
           <p style={{ fontSize: 11, color: '#999', marginTop: 10, fontStyle: 'italic' }}>
-            {rows} × {cols} = {rows * cols} piezas · {title}
+            {rows} × {cols} = {rows * cols} {t('pieces')} · {title}
           </p>
         </div>
 
@@ -132,7 +131,7 @@ export default function PrintPage({ config, onBack }) {
           style={{ marginTop: 48, paddingTop: 32, borderTop: '3px dashed #e2e8f0' }}
         >
           <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>
-            Clave de solución — {title}
+            {t('solutionKey', { title })}
           </h2>
 
           <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
@@ -140,11 +139,11 @@ export default function PrintPage({ config, onBack }) {
             {/* Solution image */}
             <div style={{ flex: '0 0 auto', maxWidth: 320 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Imagen completa
+                {t('fullImage')}
               </p>
               <img
                 src={imageDataUrl}
-                alt="solución"
+                alt={t('solutionAlt')}
                 style={{ width: '100%', display: 'block', borderRadius: 8, border: '1.5px solid #e2e8f0' }}
               />
             </div>
@@ -152,7 +151,7 @@ export default function PrintPage({ config, onBack }) {
             {/* Position map */}
             <div style={{ flex: '1 1 200px' }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                ¿Qué número va en cada posición?
+                {t('positionQuestion')}
               </p>
               <div
                 style={{
@@ -184,18 +183,17 @@ export default function PrintPage({ config, onBack }) {
                   </div>
                 ))}
               </div>
-              <p style={{ fontSize: 11, color: '#999', marginTop: 8, lineHeight: 1.6 }}>
-                El número en cada celda corresponde<br/>
-                al número impreso en la pieza recortada.
+              <p style={{ fontSize: 11, color: '#999', marginTop: 8, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                {t('positionHelp')}
               </p>
 
               {/* Instructions */}
               <div style={{ marginTop: 20, padding: '12px 14px', background: '#f0fdf4', borderRadius: 10, fontSize: 13, color: '#166534', lineHeight: 1.7 }}>
-                <strong>Instrucciones para el alumno:</strong><br/>
-                1. Recorta las {rows * cols} piezas por las líneas punteadas.<br/>
-                2. Mezcla las piezas boca abajo.<br/>
-                3. Dales la vuelta y arma la imagen.<br/>
-                4. Usa la clave solo si necesitas ayuda.
+                <strong>{t('studentInstructions')}</strong><br/>
+                {t('step1', { count: rows * cols })}<br/>
+                {t('step2')}<br/>
+                {t('step3')}<br/>
+                {t('step4')}
               </div>
             </div>
           </div>
@@ -206,7 +204,7 @@ export default function PrintPage({ config, onBack }) {
       {/* ── Screen-only tip ───────────────────────────────────────────── */}
       <div className="no-print" style={{ padding: '16px 32px', maxWidth: 880, margin: '0 auto' }}>
         <div style={{ padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, fontSize: 13, color: '#92400e' }}>
-          💡 <strong>Consejo de impresión:</strong> Usa papel de 80g o superior. Para tarjetas de puzzle más resistentes, imprime en cartulina y plastifica antes de recortar.
+          💡 <strong>{t('printAdvice')}</strong> {t('printAdviceText')}
         </div>
       </div>
 

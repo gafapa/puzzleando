@@ -5,7 +5,7 @@ import {
 } from '../utils/puzzleUtils'
 import PuzzlePieceCanvas from '../components/PuzzlePieceCanvas'
 
-export default function PlayPage({ config, onBack }) {
+export default function PlayPage({ config, onBack, t }) {
   const { imageDataUrl, imageEl, title, rows, cols } = config
 
   // ── Sizes ────────────────────────────────────────────────────────────────
@@ -145,19 +145,19 @@ export default function PlayPage({ config, onBack }) {
     <div className="play-layout">
       {/* ── Toolbar ──────────────────────────────────────────────────────── */}
       <div className="play-toolbar no-print">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>← Volver</button>
+        <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t('back')}</button>
         <span className="title">{title}</span>
         <span className="stat-badge">⏱ {formatTime(time)}</span>
         <span className="stat-badge">👆 {moves}</span>
         <span className="stat-badge">✅ {placedCount}/{rows * cols}</span>
         {selected && (
           <span style={{ fontSize: 13, color: 'var(--warning)', fontWeight: 700 }}>
-            Pieza seleccionada — clic en el tablero para colocar · Esc para cancelar
+            {t('selectedPieceHelp')}
           </span>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button className="btn btn-outline btn-sm" onClick={handleHint}>💡 Pista (3s)</button>
-          <button className="btn btn-ghost btn-sm" onClick={handleReset}>🔄 Reiniciar</button>
+          <button className="btn btn-outline btn-sm" onClick={handleHint}>💡 {t('hint')}</button>
+          <button className="btn btn-ghost btn-sm" onClick={handleReset}>🔄 {t('reset')}</button>
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export default function PlayPage({ config, onBack }) {
         {/* Tray */}
         <div className="tray-panel no-print">
           <div className="tray-header">
-            Piezas disponibles ({tray.length})
+            {t('availablePieces', { count: tray.length })}
           </div>
           <div className="tray-pieces">
             {tray.map((piece) => {
@@ -208,7 +208,7 @@ export default function PlayPage({ config, onBack }) {
             })}
             {tray.length === 0 && (
               <p style={{ color: 'var(--text-muted)', fontSize: 13, padding: '8px 4px' }}>
-                ¡Todas colocadas!
+                {t('allPlaced')}
               </p>
             )}
           </div>
@@ -233,7 +233,7 @@ export default function PlayPage({ config, onBack }) {
               pointerEvents: 'none',
               whiteSpace: 'nowrap',
             }}>
-              Haz clic en una casilla del tablero
+              {t('clickBoardSlot')}
             </div>
           )}
 
@@ -318,8 +318,8 @@ export default function PlayPage({ config, onBack }) {
       {/* ── Hint overlay ───────────────────────────────────────────────────── */}
       {showHint && (
         <div className="hint-overlay" onClick={() => setShowHint(false)}>
-          <img src={imageDataUrl} alt="solución" />
-          <p>Solución — haz clic para cerrar</p>
+          <img src={imageDataUrl} alt={t('solutionAlt')} />
+          <p>{t('solutionOverlay')}</p>
         </div>
       )}
 
@@ -328,25 +328,25 @@ export default function PlayPage({ config, onBack }) {
         <div className="victory-overlay">
           <div className="victory-card pop-in">
             <div style={{ fontSize: 56, marginBottom: 8 }}>🎉</div>
-            <h2 style={{ color: 'var(--primary)' }}>¡Completado!</h2>
+            <h2 style={{ color: 'var(--primary)' }}>{t('completed')}</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: 4 }}>{title}</p>
             <div className="stats">
               <div className="stat">
                 <span className="stat-val">{formatTime(time)}</span>
-                <span className="stat-lbl">Tiempo</span>
+                <span className="stat-lbl">{t('time')}</span>
               </div>
               <div className="stat">
                 <span className="stat-val">{moves}</span>
-                <span className="stat-lbl">Movimientos</span>
+                <span className="stat-lbl">{t('moves')}</span>
               </div>
               <div className="stat">
                 <span className="stat-val">{rows * cols}</span>
-                <span className="stat-lbl">Piezas</span>
+                <span className="stat-lbl">{t('pieces')}</span>
               </div>
             </div>
             <div className="victory-actions">
-              <button className="btn btn-primary" onClick={handleReset}>🔄 Jugar de nuevo</button>
-              <button className="btn btn-ghost"    onClick={onBack}>← Volver</button>
+              <button className="btn btn-primary" onClick={handleReset}>🔄 {t('playAgain')}</button>
+              <button className="btn btn-ghost"    onClick={onBack}>← {t('back')}</button>
             </div>
           </div>
         </div>

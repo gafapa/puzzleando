@@ -1,14 +1,14 @@
 import { useState, useRef } from 'react'
 
 const PRESETS = [
-  { label: '2×2', rows: 2, cols: 2, note: 'Muy fácil' },
-  { label: '3×3', rows: 3, cols: 3, note: 'Fácil' },
-  { label: '4×4', rows: 4, cols: 4, note: 'Medio' },
-  { label: '5×5', rows: 5, cols: 5, note: 'Difícil' },
-  { label: '6×6', rows: 6, cols: 6, note: 'Experto' },
-  { label: '4×6', rows: 4, cols: 6, note: 'Horizontal' },
-  { label: '6×4', rows: 6, cols: 4, note: 'Vertical' },
-  { label: 'Libre', rows: null, cols: null, note: 'Personalizado' },
+  { label: '2×2', rows: 2, cols: 2, noteKey: 'difficultyVeryEasy' },
+  { label: '3×3', rows: 3, cols: 3, noteKey: 'difficultyEasy' },
+  { label: '4×4', rows: 4, cols: 4, noteKey: 'difficultyMedium' },
+  { label: '5×5', rows: 5, cols: 5, noteKey: 'difficultyHard' },
+  { label: '6×6', rows: 6, cols: 6, noteKey: 'difficultyExpert' },
+  { label: '4×6', rows: 4, cols: 6, noteKey: 'horizontal' },
+  { label: '6×4', rows: 6, cols: 4, noteKey: 'vertical' },
+  { labelKey: 'free', rows: null, cols: null, noteKey: 'custom' },
 ]
 
 function getInitialPresetIndex(config) {
@@ -19,7 +19,7 @@ function getInitialPresetIndex(config) {
   return presetIndex === -1 ? PRESETS.length - 1 : presetIndex
 }
 
-export default function CreatePage({ initialConfig, onPlay, onPrint }) {
+export default function CreatePage({ initialConfig, t, onPlay, onPrint }) {
   const [imageDataUrl, setImageDataUrl] = useState(() => initialConfig?.imageDataUrl ?? null)
   const [imageEl, setImageEl] = useState(() => initialConfig?.imageEl ?? null)
   const [title, setTitle] = useState(() => initialConfig?.title ?? '')
@@ -55,29 +55,16 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
 
   const handlePlay = () => {
     if (!imageEl) return
-    onPlay({ imageDataUrl, imageEl, title: title || 'Mi Puzzle', rows, cols })
+    onPlay({ imageDataUrl, imageEl, title: title.trim() || t('defaultTitle'), rows, cols })
   }
 
   const handlePrint = () => {
     if (!imageEl) return
-    onPrint({ imageDataUrl, imageEl, title: title || 'Mi Puzzle', rows, cols })
+    onPrint({ imageDataUrl, imageEl, title: title.trim() || t('defaultTitle'), rows, cols })
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header className="app-header">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect x="2" y="2" width="12" height="12" rx="3" fill="white" opacity="0.9"/>
-          <rect x="18" y="2" width="12" height="12" rx="3" fill="white" opacity="0.7"/>
-          <rect x="2" y="18" width="12" height="12" rx="3" fill="white" opacity="0.7"/>
-          <rect x="18" y="18" width="12" height="12" rx="3" fill="white" opacity="0.9"/>
-          <circle cx="16" cy="16" r="4" fill="white"/>
-        </svg>
-        <h1>Puzzleando</h1>
-        <span className="subtitle">Crea puzzles para tu clase · Sin backend · Gratis</span>
-      </header>
-
+    <main style={{ minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, padding: '32px 24px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'grid', gridTemplateColumns: imageEl ? '1fr 1fr' : '1fr', gap: 24 }}>
 
@@ -87,7 +74,7 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
             {/* Upload */}
             <div className="card">
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                📸 Subir imagen
+                📸 {t('uploadImage')}
               </h2>
 
               {!imageEl ? (
@@ -102,8 +89,8 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                     <circle cx="24" cy="24" r="22" fill="currentColor" opacity="0.1"/>
                     <path d="M24 14v14M17 21l7-7 7 7M14 36h20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <p>Arrastra una imagen aquí</p>
-                  <small>o haz clic para buscar · JPG, PNG, WebP, GIF</small>
+                  <p>{t('dropImage')}</p>
+                  <small>{t('browseImage')}</small>
                 </div>
               ) : (
                 <div style={{ position: 'relative' }}>
@@ -117,7 +104,7 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                     onClick={() => { setImageEl(null); setImageDataUrl(null) }}
                     style={{ position: 'absolute', top: 8, right: 8, padding: '4px 10px' }}
                   >
-                    ✕ Cambiar
+                    ✕ {t('changeImage')}
                   </button>
                 </div>
               )}
@@ -134,27 +121,27 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
             {/* Title */}
             <div className="card">
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                ✏️ Título del puzzle
+                ✏️ {t('puzzleTitle')}
               </h2>
               <input
                 type="text"
-                placeholder="Ej: Los animales del bosque"
+                placeholder={t('titlePlaceholder')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={60}
               />
               <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                Aparecerá en la versión imprimible y en la pantalla de juego.
+                {t('titleHelp')}
               </p>
             </div>
 
             {/* Grid size */}
             <div className="card">
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-                🧩 Número de piezas
+                🧩 {t('pieceCount')}
               </h2>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
-                Selecciona la dificultad o crea una cuadrícula personalizada.
+                {t('pieceCountHelp')}
               </p>
               <div className="grid-chips">
                 {PRESETS.map((p, i) => (
@@ -162,11 +149,11 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                     key={i}
                     className={`grid-chip${selectedPreset === i ? ' active' : ''}`}
                     onClick={() => setSelectedPreset(i)}
-                    title={p.note}
+                    title={t(p.noteKey)}
                   >
-                    {p.label}
+                    {p.labelKey ? t(p.labelKey) : p.label}
                     <br />
-                    <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.75 }}>{p.note}</span>
+                    <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.75 }}>{t(p.noteKey)}</span>
                   </button>
                 ))}
               </div>
@@ -174,7 +161,7 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
               {preset.rows === null && (
                 <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
                   <div style={{ flex: 1 }}>
-                    <label>Filas</label>
+                    <label>{t('rows')}</label>
                     <input
                       type="number" min={2} max={12}
                       value={customRows}
@@ -182,7 +169,7 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                     />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label>Columnas</label>
+                    <label>{t('columns')}</label>
                     <input
                       type="number" min={2} max={12}
                       value={customCols}
@@ -201,7 +188,7 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                 color: 'var(--primary-dark)',
                 fontWeight: 600,
               }}>
-                🧩 {rows} × {cols} = <strong>{totalPieces} piezas</strong>
+                🧩 {rows} × {cols} = <strong>{totalPieces} {t('pieces')}</strong>
               </div>
             </div>
           </div>
@@ -213,7 +200,7 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                 {/* Preview grid */}
                 <div className="card">
                   <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                    👁️ Vista previa
+                    👁️ {t('preview')}
                   </h2>
                   <div style={{ position: 'relative', display: 'inline-block' }}>
                     <img
@@ -243,21 +230,21 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                     </svg>
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 10 }}>
-                    La imagen se dividirá en {totalPieces} piezas de jigsaw.
+                    {t('previewHelp', { count: totalPieces })}
                   </p>
                 </div>
 
                 {/* Actions */}
                 <div className="card">
                   <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                    🚀 ¿Qué quieres hacer?
+                    🚀 {t('actionsTitle')}
                   </h2>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <button className="btn btn-primary btn-lg" onClick={handlePlay} style={{ width: '100%', justifyContent: 'center' }}>
-                      🎮 Jugar en pantalla
+                      🎮 {t('playOnScreen')}
                     </button>
                     <button className="btn btn-secondary btn-lg" onClick={handlePrint} style={{ width: '100%', justifyContent: 'center' }}>
-                      🖨️ Preparar para imprimir
+                      🖨️ {t('preparePrint')}
                     </button>
                   </div>
                   <div style={{
@@ -269,9 +256,9 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
                     color: '#166534',
                     lineHeight: 1.6,
                   }}>
-                    <strong>💡 Tips para profes:</strong><br/>
-                    · <strong>Jugar en pantalla</strong> → ideal para pizarra digital o tablet.<br/>
-                    · <strong>Imprimir</strong> → piezas para recortar + clave de solución.
+                    <strong>💡 {t('teacherTips')}</strong><br/>
+                    · <strong>{t('playOnScreen')}</strong> → {t('playTip').split('→ ')[1]}<br/>
+                    · <strong>{t('print')}</strong> → {t('printTip').split('→ ')[1]}
                   </div>
                 </div>
               </>
@@ -280,14 +267,14 @@ export default function CreatePage({ initialConfig, onPlay, onPrint }) {
             {!imageEl && (
               <div className="card" style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
                 <div style={{ fontSize: 64, marginBottom: 16 }}>🧩</div>
-                <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Empieza subiendo una imagen</p>
-                <p style={{ fontSize: 14 }}>Cualquier foto, dibujo o imagen educativa.<br/>Funciona sin internet después de cargar.</p>
+                <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{t('startUploadTitle')}</p>
+                <p style={{ fontSize: 14, whiteSpace: 'pre-line' }}>{t('startUploadText')}</p>
               </div>
             )}
           </div>
 
         </div>
       </div>
-    </div>
+    </main>
   )
 }
