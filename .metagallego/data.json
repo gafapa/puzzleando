@@ -1,0 +1,13 @@
+{
+  "_info": "This file is read by metagallego. Fill in title, description and techStack to document your project. The _info field is ignored.",
+  "title": "Puzzleando Studio",
+  "description": "Puzzleando Studio is a React-based classroom puzzle maker that turns any image into printable and on-screen jigsaw activities.",
+  "techStack": [
+    "JavaScript",
+    "React",
+    "Vite",
+    "jsPDF",
+    "PWA"
+  ],
+  "category": ""
+}

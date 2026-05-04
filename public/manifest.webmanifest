@@ -1,7 +1,7 @@
 {
-  "name": "Puzzleando",
+  "name": "Puzzleando Studio",
   "short_name": "Puzzleando",
-  "description": "Create printable and interactive classroom puzzles from any image.",
+  "description": "Create printable classroom jigsaw activities from any image.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

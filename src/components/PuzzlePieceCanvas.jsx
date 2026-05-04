@@ -3,14 +3,14 @@ import { renderPiece, PAD_RATIO } from '../utils/puzzleUtils'
 
 export default function PuzzlePieceCanvas({
   image, piece, rows, cols, cellW, cellH, edgeMap,
-  selected, correct, onClick, style = {},
+  selected, correct, onClick, style = {}, connectorType = 'classic',
 }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
     if (!canvasRef.current || !image || !edgeMap) return
-    renderPiece(canvasRef.current, image, piece, rows, cols, cellW, cellH, edgeMap)
-  }, [image, piece, rows, cols, cellW, cellH, edgeMap])
+    renderPiece(canvasRef.current, image, piece, rows, cols, cellW, cellH, edgeMap, connectorType)
+  }, [image, piece, rows, cols, cellW, cellH, edgeMap, connectorType])
 
   const pad = Math.round(Math.min(cellW, cellH) * PAD_RATIO)
 

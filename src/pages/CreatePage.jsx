@@ -1,31 +1,49 @@
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
+import { CONNECTOR_TYPES, createEdgeSeed } from '../utils/puzzleUtils'
 
 const PRESETS = [
-  { label: '2×2', rows: 2, cols: 2, noteKey: 'difficultyVeryEasy' },
-  { label: '3×3', rows: 3, cols: 3, noteKey: 'difficultyEasy' },
-  { label: '4×4', rows: 4, cols: 4, noteKey: 'difficultyMedium' },
-  { label: '5×5', rows: 5, cols: 5, noteKey: 'difficultyHard' },
-  { label: '6×6', rows: 6, cols: 6, noteKey: 'difficultyExpert' },
-  { label: '4×6', rows: 4, cols: 6, noteKey: 'horizontal' },
-  { label: '6×4', rows: 6, cols: 4, noteKey: 'vertical' },
+  { label: '2x2', rows: 2, cols: 2, noteKey: 'difficultyVeryEasy' },
+  { label: '3x3', rows: 3, cols: 3, noteKey: 'difficultyEasy' },
+  { label: '4x4', rows: 4, cols: 4, noteKey: 'difficultyMedium' },
+  { label: '5x5', rows: 5, cols: 5, noteKey: 'difficultyHard' },
+  { label: '6x6', rows: 6, cols: 6, noteKey: 'difficultyExpert' },
+  { label: '4x6', rows: 4, cols: 6, noteKey: 'horizontal' },
+  { label: '6x4', rows: 6, cols: 4, noteKey: 'vertical' },
   { labelKey: 'free', rows: null, cols: null, noteKey: 'custom' },
+]
+
+const PLAY_DIFFICULTY_OPTIONS = [
+  { value: 'easy', labelKey: 'easyMode', noteKey: 'easyModeHelp' },
+  { value: 'hard', labelKey: 'hardMode', noteKey: 'hardModeHelp' },
 ]
 
 function getInitialPresetIndex(config) {
   if (!config) return 3
+
   const presetIndex = PRESETS.findIndex(
     (preset) => preset.rows === config.rows && preset.cols === config.cols
   )
+
   return presetIndex === -1 ? PRESETS.length - 1 : presetIndex
 }
 
-export default function CreatePage({ initialConfig, t, onPlay, onPrint }) {
+function getConnectorLabelKey(connectorType) {
+  return `connector${connectorType.charAt(0).toUpperCase()}${connectorType.slice(1)}`
+}
+
+export default function CreatePage({ initialConfig, t, onBack, onSave, onPlay, onPrint }) {
   const [imageDataUrl, setImageDataUrl] = useState(() => initialConfig?.imageDataUrl ?? null)
   const [imageEl, setImageEl] = useState(() => initialConfig?.imageEl ?? null)
   const [title, setTitle] = useState(() => initialConfig?.title ?? '')
   const [selectedPreset, setSelectedPreset] = useState(() => getInitialPresetIndex(initialConfig))
   const [customRows, setCustomRows] = useState(() => initialConfig?.rows ?? 4)
   const [customCols, setCustomCols] = useState(() => initialConfig?.cols ?? 4)
+  const [connectorType, setConnectorType] = useState(
+    () => initialConfig?.connectorType ?? 'classic'
+  )
+  const [playDifficulty, setPlayDifficulty] = useState(
+    () => initialConfig?.playDifficulty ?? 'easy'
+  )
   const [isDragging, setIsDragging] = useState(false)
   const fileRef = useRef(null)
 
@@ -36,75 +54,139 @@ export default function CreatePage({ initialConfig, t, onPlay, onPrint }) {
 
   function loadFile(file) {
     if (!file || !file.type.startsWith('image/')) return
+
     const reader = new FileReader()
-    reader.onload = (e) => {
-      const url = e.target.result
+    reader.onload = (event) => {
+      const url = event.target.result
       setImageDataUrl(url)
-      const img = new Image()
-      img.onload = () => setImageEl(img)
-      img.src = url
+
+      const image = new Image()
+      image.onload = () => setImageEl(image)
+      image.src = url
     }
+
     reader.readAsDataURL(file)
   }
 
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-    loadFile(e.dataTransfer.files[0])
+  function buildConfig() {
+    const reusesSavedEdges =
+      initialConfig?.edgeSeed &&
+      initialConfig.rows === rows &&
+      initialConfig.cols === cols
+
+    return {
+      ...initialConfig,
+      imageDataUrl,
+      imageEl,
+      title: title.trim() || t('defaultTitle'),
+      rows,
+      cols,
+      edgeSeed: reusesSavedEdges ? initialConfig.edgeSeed : createEdgeSeed(),
+      connectorType,
+      playDifficulty,
+    }
   }
 
-  const handlePlay = () => {
+  function handleSave() {
     if (!imageEl) return
-    onPlay({ imageDataUrl, imageEl, title: title.trim() || t('defaultTitle'), rows, cols })
+    onSave(buildConfig())
   }
 
-  const handlePrint = () => {
+  function handlePlay() {
     if (!imageEl) return
-    onPrint({ imageDataUrl, imageEl, title: title.trim() || t('defaultTitle'), rows, cols })
+    onPlay(buildConfig())
+  }
+
+  function handlePrint() {
+    if (!imageEl) return
+    onPrint(buildConfig())
   }
 
   return (
-    <main style={{ minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, padding: '32px 24px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: imageEl ? '1fr 1fr' : '1fr', gap: 24 }}>
+    <main className="editor-page">
+      <div className="editor-shell">
+        <div className="editor-toolbar">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>
+            {t('backToLibrary')}
+          </button>
+          <button className="btn btn-success btn-sm" onClick={handleSave} disabled={!imageEl}>
+            {t('savePuzzle')}
+          </button>
+        </div>
 
-          {/* Left column: upload + config */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className={`editor-layout${imageEl ? ' has-preview' : ''}`}>
+          <div className="editor-column">
+            <section className="card card-section">
+              <div className="section-heading">
+                <span className="section-kicker">{t('puzzleTitle')}</span>
+                <h2>{t('defaultTitle')}</h2>
+              </div>
+              <input
+                type="text"
+                placeholder={t('titlePlaceholder')}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={60}
+              />
+              <p className="section-help">{t('titleHelp')}</p>
+            </section>
 
-            {/* Upload */}
-            <div className="card">
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                📸 {t('uploadImage')}
-              </h2>
+            <section className="card card-section">
+              <div className="section-heading">
+                <span className="section-kicker">{t('uploadImage')}</span>
+                <h2>{t('preview')}</h2>
+              </div>
 
               {!imageEl ? (
                 <div
                   className={`upload-zone${isDragging ? ' drag-over' : ''}`}
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                  onDragOver={(event) => {
+                    event.preventDefault()
+                    setIsDragging(true)
+                  }}
                   onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
-                  onClick={() => fileRef.current.click()}
+                  onDrop={(event) => {
+                    event.preventDefault()
+                    setIsDragging(false)
+                    loadFile(event.dataTransfer.files[0])
+                  }}
+                  onClick={() => fileRef.current?.click()}
                 >
-                  <svg width="48" height="48" fill="none" viewBox="0 0 48 48" style={{ display: 'block', margin: '0 auto 12px' }}>
-                    <circle cx="24" cy="24" r="22" fill="currentColor" opacity="0.1"/>
-                    <path d="M24 14v14M17 21l7-7 7 7M14 36h20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg
+                    width="48"
+                    height="48"
+                    fill="none"
+                    viewBox="0 0 48 48"
+                    style={{ display: 'block', margin: '0 auto 12px' }}
+                  >
+                    <circle cx="24" cy="24" r="22" fill="currentColor" opacity="0.1" />
+                    <path
+                      d="M24 14v14M17 21l7-7 7 7M14 36h20"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                   <p>{t('dropImage')}</p>
                   <small>{t('browseImage')}</small>
                 </div>
               ) : (
-                <div style={{ position: 'relative' }}>
+                <div className="editor-image-preview">
                   <img
                     src={imageDataUrl}
                     alt="preview"
-                    style={{ width: '100%', borderRadius: 10, display: 'block', maxHeight: 200, objectFit: 'cover' }}
+                    className="editor-upload-preview-image"
                   />
                   <button
                     className="btn btn-ghost btn-sm"
-                    onClick={() => { setImageEl(null); setImageDataUrl(null) }}
-                    style={{ position: 'absolute', top: 8, right: 8, padding: '4px 10px' }}
+                    onClick={() => {
+                      setImageEl(null)
+                      setImageDataUrl(null)
+                    }}
+                    style={{ position: 'absolute', top: 12, right: 12, padding: '4px 10px' }}
                   >
-                    ✕ {t('changeImage')}
+                    {t('changeImage')}
                   </button>
                 </div>
               )}
@@ -114,165 +196,196 @@ export default function CreatePage({ initialConfig, t, onPlay, onPrint }) {
                 type="file"
                 accept="image/*"
                 style={{ display: 'none' }}
-                onChange={(e) => loadFile(e.target.files[0])}
+                onChange={(event) => loadFile(event.target.files[0])}
               />
-            </div>
+            </section>
 
-            {/* Title */}
-            <div className="card">
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                ✏️ {t('puzzleTitle')}
-              </h2>
-              <input
-                type="text"
-                placeholder={t('titlePlaceholder')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={60}
-              />
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                {t('titleHelp')}
-              </p>
-            </div>
+            <section className="card card-section">
+              <div className="section-heading">
+                <span className="section-kicker">{t('pieceCount')}</span>
+                <h2>{rows} × {cols}</h2>
+              </div>
+              <p className="section-help">{t('pieceCountHelp')}</p>
 
-            {/* Grid size */}
-            <div className="card">
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-                🧩 {t('pieceCount')}
-              </h2>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
-                {t('pieceCountHelp')}
-              </p>
               <div className="grid-chips">
-                {PRESETS.map((p, i) => (
+                {PRESETS.map((item, index) => (
                   <button
-                    key={i}
-                    className={`grid-chip${selectedPreset === i ? ' active' : ''}`}
-                    onClick={() => setSelectedPreset(i)}
-                    title={t(p.noteKey)}
+                    key={`${item.rows ?? 'free'}-${item.cols ?? 'free'}`}
+                    className={`grid-chip${selectedPreset === index ? ' active' : ''}`}
+                    onClick={() => setSelectedPreset(index)}
+                    title={t(item.noteKey)}
                   >
-                    {p.labelKey ? t(p.labelKey) : p.label}
+                    {item.labelKey ? t(item.labelKey) : item.label}
                     <br />
-                    <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.75 }}>{t(p.noteKey)}</span>
+                    <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.75 }}>
+                      {t(item.noteKey)}
+                    </span>
                   </button>
                 ))}
               </div>
 
               {preset.rows === null && (
-                <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-                  <div style={{ flex: 1 }}>
+                <div className="editor-grid-inputs">
+                  <div>
                     <label>{t('rows')}</label>
                     <input
-                      type="number" min={2} max={12}
+                      type="number"
+                      min={2}
+                      max={12}
                       value={customRows}
-                      onChange={(e) => setCustomRows(Math.max(2, Math.min(12, +e.target.value)))}
+                      onChange={(event) =>
+                        setCustomRows(Math.max(2, Math.min(12, Number(event.target.value) || 2)))
+                      }
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div>
                     <label>{t('columns')}</label>
                     <input
-                      type="number" min={2} max={12}
+                      type="number"
+                      min={2}
+                      max={12}
                       value={customCols}
-                      onChange={(e) => setCustomCols(Math.max(2, Math.min(12, +e.target.value)))}
+                      onChange={(event) =>
+                        setCustomCols(Math.max(2, Math.min(12, Number(event.target.value) || 2)))
+                      }
                     />
                   </div>
                 </div>
               )}
 
-              <div style={{
-                marginTop: 14,
-                padding: '10px 14px',
-                background: 'var(--primary-light)',
-                borderRadius: 8,
-                fontSize: 14,
-                color: 'var(--primary-dark)',
-                fontWeight: 600,
-              }}>
-                🧩 {rows} × {cols} = <strong>{totalPieces} {t('pieces')}</strong>
+              <div className="editor-summary-badge">
+                {rows} × {cols} = <strong>{totalPieces} {t('pieces')}</strong>
               </div>
-            </div>
+            </section>
+
+            <section className="card card-section">
+              <div className="section-heading">
+                <span className="section-kicker">{t('connectorType')}</span>
+                <h2>{t('connectorType')}</h2>
+              </div>
+              <p className="section-help">{t('connectorTypeHelp')}</p>
+              <div
+                className="grid-chips"
+                style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}
+              >
+                {CONNECTOR_TYPES.map((type) => (
+                  <button
+                    key={type}
+                    className={`grid-chip${connectorType === type ? ' active' : ''}`}
+                    onClick={() => setConnectorType(type)}
+                  >
+                    {t(getConnectorLabelKey(type))}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="card card-section">
+              <div className="section-heading">
+                <span className="section-kicker">{t('difficultyMode')}</span>
+                <h2>{t('playDifficultyTitle')}</h2>
+              </div>
+              <p className="section-help">{t('playDifficultyHelp')}</p>
+              <div
+                className="grid-chips"
+                style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+              >
+                {PLAY_DIFFICULTY_OPTIONS.map((item) => (
+                  <button
+                    key={item.value}
+                    className={`grid-chip${playDifficulty === item.value ? ' active' : ''}`}
+                    onClick={() => setPlayDifficulty(item.value)}
+                    title={t(item.noteKey)}
+                  >
+                    {t(item.labelKey)}
+                    <br />
+                    <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.75 }}>
+                      {t(item.noteKey)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
 
-          {/* Right column: preview + actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="editor-column">
             {imageEl && (
               <>
-                {/* Preview grid */}
-                <div className="card">
-                  <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                    👁️ {t('preview')}
-                  </h2>
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                <section className="card card-section editor-preview-card">
+                  <div className="section-heading">
+                    <span className="section-kicker">{t('preview')}</span>
+                    <h2>{title.trim() || t('defaultTitle')}</h2>
+                  </div>
+
+                  <div className="editor-board-preview">
                     <img
                       src={imageDataUrl}
                       alt="preview"
-                      style={{
-                        width: '100%',
-                        maxWidth: 360,
-                        display: 'block',
-                        borderRadius: 8,
-                      }}
+                      className="editor-board-preview-image"
                     />
-                    {/* Grid overlay */}
                     <svg
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+                      className="editor-board-preview-grid"
                       viewBox={`0 0 ${cols} ${rows}`}
-                      preserveAspectRatio="none"
+                      preserveAspectRatio="xMidYMid meet"
                     >
-                      {Array.from({ length: cols - 1 }, (_, i) => (
-                        <line key={`v${i}`} x1={i + 1} y1={0} x2={i + 1} y2={rows}
-                          stroke="rgba(255,255,255,0.7)" strokeWidth="0.06" />
+                      {Array.from({ length: cols - 1 }, (_, index) => (
+                        <line
+                          key={`v${index}`}
+                          x1={index + 1}
+                          y1={0}
+                          x2={index + 1}
+                          y2={rows}
+                          stroke="rgba(255,255,255,0.7)"
+                          strokeWidth="0.06"
+                        />
                       ))}
-                      {Array.from({ length: rows - 1 }, (_, i) => (
-                        <line key={`h${i}`} x1={0} y1={i + 1} x2={cols} y2={i + 1}
-                          stroke="rgba(255,255,255,0.7)" strokeWidth="0.06" />
+                      {Array.from({ length: rows - 1 }, (_, index) => (
+                        <line
+                          key={`h${index}`}
+                          x1={0}
+                          y1={index + 1}
+                          x2={cols}
+                          y2={index + 1}
+                          stroke="rgba(255,255,255,0.7)"
+                          strokeWidth="0.06"
+                        />
                       ))}
                     </svg>
                   </div>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 10 }}>
+
+                  <p className="section-help" style={{ marginTop: 14 }}>
                     {t('previewHelp', { count: totalPieces })}
                   </p>
-                </div>
+                </section>
 
-                {/* Actions */}
-                <div className="card">
-                  <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-                    🚀 {t('actionsTitle')}
-                  </h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <button className="btn btn-primary btn-lg" onClick={handlePlay} style={{ width: '100%', justifyContent: 'center' }}>
-                      🎮 {t('playOnScreen')}
+                <section className="card card-section editor-actions-card">
+                  <div className="section-heading">
+                    <span className="section-kicker">{t('actionsTitle')}</span>
+                    <h2>{t(playDifficulty === 'easy' ? 'easyMode' : 'hardMode')}</h2>
+                  </div>
+                  <p className="section-help">
+                    {t(playDifficulty === 'easy' ? 'easyModeHelp' : 'hardModeHelp')}
+                  </p>
+                  <div className="editor-actions-stack">
+                    <button
+                      className="btn btn-primary btn-lg"
+                      onClick={handlePlay}
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      {t('playOnScreen')}
                     </button>
-                    <button className="btn btn-secondary btn-lg" onClick={handlePrint} style={{ width: '100%', justifyContent: 'center' }}>
-                      🖨️ {t('preparePrint')}
+                    <button
+                      className="btn btn-secondary btn-lg"
+                      onClick={handlePrint}
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      {t('preparePrint')}
                     </button>
                   </div>
-                  <div style={{
-                    marginTop: 16,
-                    padding: '12px 14px',
-                    background: '#f0fdf4',
-                    borderRadius: 10,
-                    fontSize: 13,
-                    color: '#166534',
-                    lineHeight: 1.6,
-                  }}>
-                    <strong>💡 {t('teacherTips')}</strong><br/>
-                    · <strong>{t('playOnScreen')}</strong> → {t('playTip').split('→ ')[1]}<br/>
-                    · <strong>{t('print')}</strong> → {t('printTip').split('→ ')[1]}
-                  </div>
-                </div>
+                </section>
               </>
             )}
-
-            {!imageEl && (
-              <div className="card" style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
-                <div style={{ fontSize: 64, marginBottom: 16 }}>🧩</div>
-                <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{t('startUploadTitle')}</p>
-                <p style={{ fontSize: 14, whiteSpace: 'pre-line' }}>{t('startUploadText')}</p>
-              </div>
-            )}
           </div>
-
         </div>
       </div>
     </main>
